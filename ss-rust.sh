@@ -197,7 +197,7 @@ configure_shadowsocks() {
     "server_port":$SS_PORT,
     "password":"$SS_PASSWORD",
     "timeout":600,
-    "mode":"tcp",
+    "mode":"tcp_only",
     "method":"chacha20-ietf-poly1305"
 }
 EOF
