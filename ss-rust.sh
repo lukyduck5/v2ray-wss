@@ -19,6 +19,18 @@ check_root() {
     fi
 }
 
+# 创建一个非特权用户来运行Shadowsocks服务
+create_ss_user() {
+    echo -e "${CYAN}创建Shadowsocks系统用户...${PLAIN}"
+    if ! id -u shadowsocks-rust &>/dev/null; then
+        # -r: 创建系统用户, -s: 设置shell为nologin禁止登录, -M: 不创建家目录
+        useradd -r -s /usr/sbin/nologin -M shadowsocks-rust
+        echo -e "${GREEN}系统用户 'shadowsocks-rust' 创建成功。${PLAIN}"
+    else
+        echo -e "${YELLOW}系统用户 'shadowsocks-rust' 已存在。${PLAIN}"
+    fi
+}
+
 # 生成随机密码和端口
 generate_credentials() {
     # 使用更可靠的方式生成UUID
@@ -189,6 +201,11 @@ configure_shadowsocks() {
     "method":"aes-128-gcm"
 }
 EOF
+
+    # 设置配置文件权限，允许shadowsocks-rust用户读取
+    chown -R root:shadowsocks-rust /etc/shadowsocks
+    chmod 750 /etc/shadowsocks
+    chmod 640 /etc/shadowsocks/config.json
     
     # 创建systemd服务文件
     cat > /etc/systemd/system/shadowsocks.service << EOF
@@ -197,6 +214,8 @@ Description=Shadowsocks Rust Server
 After=network.target
 
 [Service]
+User=shadowsocks-rust
+Group=shadowsocks-rust
 ExecStart=/usr/local/bin/ssserver -c /etc/shadowsocks/config.json
 Restart=on-failure
 RestartSec=3s
@@ -259,6 +278,7 @@ generate_client_info() {
 # 主函数
 main() {
     check_root
+    create_ss_user
     generate_credentials
     install_dependencies
     detect_architecture
