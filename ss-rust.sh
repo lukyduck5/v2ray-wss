@@ -31,6 +31,42 @@ create_ss_user() {
     fi
 }
 
+# 优化系统内核参数
+optimize_sysctl() {
+    echo -e "${CYAN}正在设置sysctl...${PLAIN}"
+    
+    SYSCTL_CONF="/etc/sysctl.d/99-shadowsocks.conf"
+
+    # Check for BBR support
+    if ! modinfo tcp_bbr &>/dev/null; then
+        echo -e "${YELLOW}警告: 内核不支持 BBR 拥塞控制算法，将跳过相关设置。${PLAIN}"
+        BBR_SETTING="# net.ipv4.tcp_congestion_control = bbr (BBR not supported by kernel)"
+    else
+        BBR_SETTING="net.ipv4.tcp_congestion_control = bbr"
+        echo -e "${GREEN}检测到 BBR 支持，将启用。${PLAIN}"
+    fi
+
+    # Create the sysctl configuration file
+    cat > "$SYSCTL_CONF" << EOF
+# Shadowsocks Performance and Security Optimizations
+
+# Disable ping responses
+net.ipv4.icmp_echo_ignore_all = 1
+
+# Set queuing discipline for BBR
+net.core.default_qdisc = fq
+
+# BBR congestion control (if available)
+ $BBR_SETTING
+EOF
+
+    # Apply the settings
+    sysctl --system > /dev/null 2>&1
+    sysctl -p > /dev/null 2>&1
+
+    echo -e "${GREEN}sysctl设置完成并已应用。${PLAIN}"
+}
+
 # 生成随机密码和端口
 generate_credentials() {
     # 使用更可靠的方式生成UUID
@@ -279,6 +315,7 @@ generate_client_info() {
 main() {
     check_root
     create_ss_user
+    optimize_sysctl
     generate_credentials
     install_dependencies
     detect_architecture
