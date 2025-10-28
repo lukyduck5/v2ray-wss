@@ -197,8 +197,8 @@ configure_shadowsocks() {
     "server_port":$SS_PORT,
     "password":"$SS_PASSWORD",
     "timeout":600,
-    "mode":"tcp_and_udp",
-    "method":"aes-128-gcm"
+    "mode":"tcp",
+    "method":"chacha20-ietf-poly1305"
 }
 EOF
 
@@ -241,7 +241,7 @@ generate_client_info() {
     echo -e "${CYAN}生成客户端配置信息...${PLAIN}"
     
     # 编码为SS URL
-    SS_LINK=$(echo -n "aes-128-gcm:${SS_PASSWORD}@${IP}:${SS_PORT}" | base64 -w 0)
+    SS_LINK=$(echo -n "chacha20-ietf-poly1305:${SS_PASSWORD}@${IP}:${SS_PORT}" | base64 -w 0)
     
     # 检查服务状态
     SS_STATUS=$(systemctl is-active shadowsocks.service)
@@ -262,8 +262,8 @@ generate_client_info() {
     echo -e "${YELLOW}服务器地址:${PLAIN} ${IP}"
     echo -e "${YELLOW}端口:${PLAIN} ${SS_PORT}"
     echo -e "${YELLOW}密码:${PLAIN} ${SS_PASSWORD}"
-    echo -e "${YELLOW}加密方式:${PLAIN} aes-128-gcm"
-    echo -e "${YELLOW}传输协议:${PLAIN} tcp+udp"
+    echo -e "${YELLOW}加密方式:${PLAIN} chacha20-ietf-poly1305"
+    echo -e "${YELLOW}传输协议:${PLAIN} tcp"
     echo -e "-------------------------------------------"
     echo -e "${YELLOW}服务状态:${PLAIN} ${SERVICE_STATUS}"
     echo -e ""
