@@ -44,10 +44,10 @@ generate_credentials() {
     echo -e "${YELLOW}默认: 随机端口 (15秒后自动选择随机端口)${PLAIN}"
     read -t 15 -p "> " SS_PORT
     if [[ -z "$SS_PORT" ]]; then
-        SS_PORT=$(shuf -i 10000-65000 -n 1)
+        SS_PORT=$(shuf -i 1000-65000 -n 1)
     elif ! [[ "$SS_PORT" =~ ^[0-9]+$ ]] || [[ "$SS_PORT" -lt 1 ]] || [[ "$SS_PORT" -gt 65535 ]]; then
         echo -e "${YELLOW}输入的端口无效，使用随机端口${PLAIN}"
-        SS_PORT=$(shuf -i 10000-65000 -n 1)
+        SS_PORT=$(shuf -i 1000-65000 -n 1)
     fi
 }
 
@@ -188,10 +188,10 @@ configure_shadowsocks() {
     echo -e "${CYAN}配置Shadowsocks...${PLAIN}"
     
     # 创建配置目录
-    mkdir -p /etc/shadowsocks
+    mkdir -p /etc/shadowsocks-rust
     
     # 创建配置文件
-    cat > /etc/shadowsocks/config.json << EOF
+    cat > /etc/shadowsocks-rust/config.json << EOF
 {
     "server":"::",
     "server_port":$SS_PORT,
@@ -203,12 +203,12 @@ configure_shadowsocks() {
 EOF
 
     # 设置配置文件权限，允许shadowsocks-rust用户读取
-    chown -R root:shadowsocks-rust /etc/shadowsocks
-    chmod 750 /etc/shadowsocks
-    chmod 640 /etc/shadowsocks/config.json
+    chown -R root:shadowsocks-rust /etc/shadowsocks-rust
+    chmod 750 /etc/shadowsocks-rust
+    chmod 640 /etc/shadowsocks-rust/config.json
     
     # 创建systemd服务文件
-    cat > /etc/systemd/system/shadowsocks.service << EOF
+    cat > /etc/systemd/system/shadowsocks-rust.service << EOF
 [Unit]
 Description=Shadowsocks Rust Server
 After=network.target
@@ -216,7 +216,7 @@ After=network.target
 [Service]
 User=shadowsocks-rust
 Group=shadowsocks-rust
-ExecStart=/usr/local/bin/ssserver -c /etc/shadowsocks/config.json
+ExecStart=/usr/local/bin/ssserver -c /etc/shadowsocks-rust/config.json
 Restart=on-failure
 RestartSec=3s
 LimitNOFILE=65535
@@ -227,8 +227,8 @@ EOF
     
     # 重载、启用和启动服务
     systemctl daemon-reload
-    systemctl enable shadowsocks.service
-    systemctl restart shadowsocks.service
+    systemctl enable shadowsocks-rust.service
+    systemctl restart shadowsocks-rust.service
     
     # 清理临时文件
     rm -f tcp-wss.sh ss-rust.sh 2>/dev/null
@@ -244,7 +244,7 @@ generate_client_info() {
     SS_LINK=$(echo -n "chacha20-ietf-poly1305:${SS_PASSWORD}@${IP}:${SS_PORT}" | base64 -w 0)
     
     # 检查服务状态
-    SS_STATUS=$(systemctl is-active shadowsocks.service)
+    SS_STATUS=$(systemctl is-active shadowsocks-rust.service)
     if [[ "$SS_STATUS" == "active" ]]; then
         SERVICE_STATUS="${GREEN}运行中${PLAIN}"
     else
