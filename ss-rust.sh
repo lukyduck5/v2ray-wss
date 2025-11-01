@@ -77,13 +77,13 @@ generate_credentials() {
     fi
 
     echo -e "${YELLOW}请输入端口号 [1-65535]${PLAIN}"
-    echo -e "${YELLOW}默认: 随机端口 (15秒后自动选择随机端口)${PLAIN}"
+    echo -e "${YELLOW}默认: 7890 (15秒后自动使用默认端口)${PLAIN}"
     read -t 15 -p "> " SS_PORT
     if [[ -z "$SS_PORT" ]]; then
-        SS_PORT=$(shuf -i 1000-65000 -n 1)
+        SS_PORT=7890
     elif ! [[ "$SS_PORT" =~ ^[0-9]+$ ]] || [[ "$SS_PORT" -lt 1 ]] || [[ "$SS_PORT" -gt 65535 ]]; then
-        echo -e "${YELLOW}输入的端口无效，使用随机端口${PLAIN}"
-        SS_PORT=$(shuf -i 1000-65000 -n 1)
+        echo -e "${YELLOW}输入的端口无效，使用默认端口 7890${PLAIN}"
+        SS_PORT=7890
     fi
 }
 
